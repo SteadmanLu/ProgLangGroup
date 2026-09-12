@@ -1,8 +1,25 @@
 import PA1Helper
 import System.Environment (getArgs)
+import qualified Data.Set as Set
+import Data.Set (Set)
+
 
 -- Haskell representation of lambda expression
 -- data Lexp = Atom String | Lambda String Lexp | Apply Lexp  Lexp 
+
+-- Free Variables
+
+freeVars:: Lexp -> Set String
+freeVars (Atom v) = Set.singleton v
+freeVars (Lambda var body) = Set.delete var (freeVars body)
+freeVars (Apply exp1 exp2) = Set.union (freeVars exp1) (freeVars exp2)
+
+-- Fresh variable generation (for alpha renaming)
+freshVar :: String -> Set String -> String
+freshVar base avoid
+    |candidate `Set.notMember` avoid = candidate
+    |otherwise = freshVar candidate avoid
+    where candidate = base ++ "1"
 
 -- Given a filename and function for reducing lambda expressions,
 -- reduce all valid lambda expressions in the file and output results.
