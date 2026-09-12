@@ -21,6 +21,22 @@ freshVar base avoid
     |otherwise = freshVar candidate avoid
     where candidate = base ++ "1"
 
+-- Substitution: subset x n e == e[x := n] ("replace free x in e with n")
+subst :: String -> Lexp -> Lexp -> Lexp
+subst x n (Atom v)
+    | v == x = n            -- Repace the variable itself
+    | otherwise = Atom v    -- different variable leave it alone
+
+subst x n (Apply e1 e2) = Apply (subst x n e1) (subst x n e2) -- Apply the substitution to both sides of the application
+
+subst x n (Lambda v body)
+    |v == x = Lambda v body -- If the variable is bound, leave it alone
+    |v `Set.member` freeVars n =  
+        let v'    = freshVar v (Set.union (freeVars n) (freeVars body)) 
+            body' = subst v (Atom v') body   -- rename v -> v' inside body
+        in Lambda v' (subst x n body'')
+    |otherwise = Lambda v (subst x n body) -- safe to substitute directly into the body
+
 -- Given a filename and function for reducing lambda expressions,
 -- reduce all valid lambda expressions in the file and output results.
 -- runProgram :: String -> (Lexp -> Lexp) -> IO ()
