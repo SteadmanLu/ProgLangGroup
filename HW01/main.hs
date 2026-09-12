@@ -34,7 +34,7 @@ subst x n (Lambda v body)
     |v `Set.member` freeVars n =  
         let v'    = freshVar v (Set.union (freeVars n) (freeVars body)) 
             body' = subst v (Atom v') body   -- rename v -> v' inside body
-        in Lambda v' (subst x n body'')
+        in Lambda v' (subst x n body')
     |otherwise = Lambda v (subst x n body) -- safe to substitute directly into the body
 
 -- Given a filename and function for reducing lambda expressions,
