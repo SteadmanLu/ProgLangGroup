@@ -37,6 +37,33 @@ subst x n (Lambda v body)
         in Lambda v' (subst x n body')
     |otherwise = Lambda v (subst x n body) -- safe to substitute directly into the body
 
+
+-- Eta reduction
+stepEta :: Lexp -> Maybe Lexp
+stepEta (Lambda x (Apply f (Atom y)))
+  | x == y && x `Set.notMember` freeVars f =
+      Just f   -- direct eta-redex at this node
+
+stepEta (Lambda x body) =
+  case stepEta body of
+    Just body' -> Just (Lambda x body')
+    Nothing    -> Nothing
+
+stepEta (Apply e1 e2) =
+  case stepEta e1 of
+    Just e1' -> Just (Apply e1' e2)
+    Nothing  -> case stepEta e2 of
+                  Just e2' -> Just (Apply e1 e2')
+                  Nothing  -> Nothing
+
+stepEta (Atom _) = Nothing
+ 
+-- | Repeatedly apply stepEta until no eta-redex remains.
+etaNormalize :: Lexp -> Lexp
+etaNormalize e = case stepEta e of
+  Just e' -> etaNormalize e'
+  Nothing -> e
+
 -- Given a filename and function for reducing lambda expressions,
 -- reduce all valid lambda expressions in the file and output results.
 -- runProgram :: String -> (Lexp -> Lexp) -> IO ()
