@@ -66,7 +66,7 @@ etaNormalize e = case stepEta e of
 
 betaReduce :: Lexp -> Lexp
 betaReduce (Apply (Lambda var body) arg) =
-    substitute var arg body
+    subst var arg body
 
 betaReduce (Apply e1 e2) =
     Apply (betaReduce e1) (betaReduce e2)
