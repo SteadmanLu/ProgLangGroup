@@ -64,6 +64,17 @@ etaNormalize e = case stepEta e of
   Just e' -> etaNormalize e'
   Nothing -> e
 
+betaReduce :: Lexp -> Lexp
+betaReduce (Apply (Lambda var body) arg) =
+    substitute var arg body
+
+betaReduce (Apply e1 e2) =
+    Apply (betaReduce e1) (betaReduce e2)
+
+betaReduce (Lambda var body) =
+    Lambda var (betaReduce body)
+
+betaReduce e = e
 -- Given a filename and function for reducing lambda expressions,
 -- reduce all valid lambda expressions in the file and output results.
 -- runProgram :: String -> (Lexp -> Lexp) -> IO ()
