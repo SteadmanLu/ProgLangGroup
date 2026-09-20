@@ -5,7 +5,6 @@ import Data.Set (Set)
 
 
 -- Free Variables
-
 freeVars:: Lexp -> Set String
 freeVars (Atom v) = Set.singleton v
 freeVars (Lambda var body) = Set.delete var (freeVars body)
