@@ -8,7 +8,6 @@ import Data.Set (Set)
 -- data Lexp = Atom String | Lambda String Lexp | Apply Lexp  Lexp 
 
 -- Free Variables
-
 freeVars:: Lexp -> Set String
 freeVars (Atom v) = Set.singleton v
 freeVars (Lambda var body) = Set.delete var (freeVars body)
