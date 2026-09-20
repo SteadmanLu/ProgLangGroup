@@ -102,7 +102,7 @@ id' lexp@(Apply _ _) = lexp
 -- return whatever it was given, of course!
 
 reducer :: Lexp -> Lexp
-reducer lexp = betaNormalize lexp
+reducer lexp = etaNormalize (betaNormalize lexp)
 
 -- Entry point of program
 main = do
