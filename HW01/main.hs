@@ -95,7 +95,7 @@ id' lexp@(Apply _ _) = lexp
 -- return whatever it was given, of course!
 
 reducer :: Lexp -> Lexp
-reducer lexp = lexp
+reducer lexp = betaReduce lexp
 
 -- Entry point of program
 main = do
