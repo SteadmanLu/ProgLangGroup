@@ -75,6 +75,13 @@ betaReduce (Lambda var body) =
     Lambda var (betaReduce body)
 
 betaReduce e = e
+
+-- | Repeatedly apply betaReduce until the expression stops changing
+betaNormalize :: Lexp -> Lexp
+betaNormalize e =
+  let e' = betaReduce e
+  in if e' == e then e else betaNormalize e'
+
 -- Given a filename and function for reducing lambda expressions,
 -- reduce all valid lambda expressions in the file and output results.
 -- runProgram :: String -> (Lexp -> Lexp) -> IO ()
@@ -95,7 +102,7 @@ id' lexp@(Apply _ _) = lexp
 -- return whatever it was given, of course!
 
 reducer :: Lexp -> Lexp
-reducer lexp = betaReduce lexp
+reducer lexp = betaNormalize lexp
 
 -- Entry point of program
 main = do

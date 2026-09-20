@@ -2,7 +2,7 @@ y
 \x.(y x)
 \y1.(y1 (y w))
 \y1.((y w) y1)
-(\x.(\x.(x x) x) y)
-((\t.\e.((\x.\y.x t) e) x) y)
+(y y)
+x
 \x.((y \x.(z x)) x)
-(\x.\y.(x y) (y w))
+\y1.((y w) y1)
