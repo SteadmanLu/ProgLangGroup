@@ -1,0 +1,5 @@
+A rover begins each Martian day by checking power, temperature, and communication status. The rover then receives a plan created from recent images and scientific priorities. Before moving, it studies nearby rocks and estimates whether loose dust could hide a dangerous slope.
+
+During a short drive, the rover pauses to photograph wheel tracks and compare them with older tracks. Fine dust covers some surfaces, while wind removes dust from others. Engineers use these changes to understand local weather and to choose a safer route for the rover.
+
+At the next stop, an instrument examines a layered rock beside the rover. The team saves both raw measurements and a smaller summary for quick review. A rover-assisted experiment is one hyphenated token and does not count as the separate word rover.

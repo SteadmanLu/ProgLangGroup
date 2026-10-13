@@ -1,0 +1,5 @@
+A volcano observatory combines ground sensors, satellite images, gas measurements, and field reports. No single signal can predict every eruption. Scientists therefore compare changes in earthquake activity, surface shape, heat, and gas before updating an alert.
+
+When lava reaches the surface, its speed depends on slope, temperature, and composition. A narrow lava channel may move quickly, while a broad front advances more slowly. Field teams map the edge from a safe distance and mark roads that could be affected.
+
+Wind can carry an ash-cloud far from the volcano, but ash by itself is a different token. The aviation notice uses ash-cloud for the combined hazard and ash for loose particles measured near the ground. Clear wording helps emergency teams choose appropriate actions.
