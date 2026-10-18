@@ -21,22 +21,52 @@ start(N, WorkerNodes, Client) ->
 
 loop(AnalysisId, Workers, Pending) ->
     receive
-        {analyze, Client, FileName, Contents, Keyword} ->
-            %% TODO:
-            %% 1. Form the active-Worker list in Worker-ID order.
-            %% 2. If it is empty, return error.
-            %% 3. Otherwise choose valid, nonempty, word-aligned chunk
-            %%    boundaries. Empty input produces no chunks and count 0.
-            %% 4. Distribute the chunks across the active Workers so the work
-            %%    is reasonably balanced, then send them asynchronously.
-            %% 5. Record this analysis in Pending and return to this receive
-            %%    loop immediately; do not wait for its chunks here.
-            %% AnalysisId increases even when the result is error.
-            _ = {FileName, Contents, Keyword},
-            Client ! {analysis_result, self(), AnalysisId, error},
-            loop(AnalysisId + 1, Workers, Pending);
+        %% Handle one Analyze request from the Client. This clause never waits for
+        %% partial counts: it dispatches chunks and returns to the receive loop, so
+        %% later requests are accepted while earlier analyses are still running.
+        {analyze, Client, _FileName, Contents, Keyword} ->
+            %% Snapshot of the active Workers at this moment, in Worker-ID order.
+            %% Later deactivations do not affect this analysis.
+            Active = [W || W <- Workers, W#worker_info.active],
+            %% Split the words into at most one balanced chunk per active Worker.
+            %% No active Workers means nothing to split.
+            Chunks = case Active of
+                         [] -> [];
+                         _  -> pa2_util:split_chunks(Contents, length(Active))
+                     end,
+            case {Active, Chunks} of
+                %% No active Workers: report ERROR. The analysis still uses its ID.
+                {[], _} ->
+                    Client ! {analysis_result, self(), AnalysisId, error},
+                    loop(AnalysisId + 1, Workers, Pending);
+                %% File has no words: the count is 0 and no chunks are created, so
+                %% there is nothing to track in Pending.
+                {_, []} ->
+                    Client ! {analysis_result, self(), AnalysisId, 0},
+                    loop(AnalysisId + 1, Workers, Pending);
+                %% Normal case: send chunk i to the i-th active Worker. If there are
+                %% fewer chunks than Workers, the extras receive nothing, which still
+                %% satisfies the balanced-load rule (loads differ by at most 1).
+                _ ->
+                    Targets = lists:sublist(Active, length(Chunks)),
+                    Numbered = lists:zip3(lists:seq(0, length(Chunks) - 1),
+                                          Chunks, Targets),
+                    lists:foreach(
+                        fun({ChunkId, Chunk, W}) ->
+                            W#worker_info.pid !
+                                {analyze_chunk, self(), AnalysisId, ChunkId,
+                                 <<>>, Chunk, Keyword}
+                        end, Numbered),
+                    %% Track this analysis so chunk_result can match replies to it
+                    %% by analysis ID, independently of any other running analysis.
+                    Entry = #{client => Client,
+                              expected => length(Chunks),
+                              results => #{}},
+                    loop(AnalysisId + 1, Workers, Pending#{AnalysisId => Entry})
+            end;
 
         {chunk_result, _WorkerPid, ResultAnalysisId, ChunkId, Count} ->
+            Entry = maps:get(ResultAnalysisId, Pending),
             %% TODO: Update the matching Pending analysis. Once every unique
             %% chunk result has arrived, send the total and analysis ID to its
             %% Client. Results from different analyses may be interleaved.
@@ -56,8 +86,25 @@ loop(AnalysisId, Workers, Pending) ->
             ok
     end.
 
-create_workers(_N, _WorkerNodes) ->
-    %% Replace this placeholder. The record above is supplied for storing each
-    %% Worker's ID, PID, and active state.
-    _Example = #worker_info{id = 0, pid = self(), active = true},
-    [].
+%% Create N Workers and return their records in Worker-ID order. Returns only
+%% after every Worker has reported ready, so the caller can safely tell the
+%% Client that initialization is complete.
+create_workers(N, WorkerNodes) ->
+    Coordinator = self(),
+    Ids = lists:seq(0, N - 1),
+    %% Start all Workers first so they initialize in parallel.
+    lists:foreach(fun(Id) -> spawn_worker(Id, WorkerNodes, Coordinator) end, Ids),
+    %% Collect one ready message per Worker, by ID. Selective receive holds
+    %% out-of-order arrivals in the mailbox, so the result is in ID order.
+    [receive
+        {worker_ready, Id, Pid} -> #worker_info{id = Id, pid = Pid}
+    end || Id<- Ids].
+
+%% Spawn one Worker. An empty node list means concurrent mode (local spawn).
+%% Otherwise Worker Id runs on the Id-th node of the list (lists:nth is
+%% 1-indexed, hence Id + 1).
+spawn_worker(Id, [], Coordinator) ->
+    spawn(worker, start, [Id, Coordinator]);
+spawn_worker(Id, WorkerNodes, Coordinator) ->
+    Node = lists:nth(Id + 1, WorkerNodes),
+    spawn(Node, worker, start, [Id, Coordinator]).
