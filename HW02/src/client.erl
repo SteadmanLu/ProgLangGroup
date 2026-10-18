@@ -26,10 +26,6 @@ run(N, ScriptFile, OutputFile, LocationsFile) ->
 
     Commands = pa2_util:script_commands(ScriptFile),
     InputDirectory = filename:dirname(filename:absname(ScriptFile)),
-    %% TODO: Process Analyze requests without waiting for each result. An
-    %% Inactive command is a barrier: wait for its acknowledgement before
-    %% sending later commands. Append each analysis result when it is received
-    %% and record its analysis ID. At EOF, collect every outstanding result.
     {AnalysisCount, Results0} = run_commands(
         Commands,
         InputDirectory,

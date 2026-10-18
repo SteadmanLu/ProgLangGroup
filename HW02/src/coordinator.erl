@@ -10,12 +10,8 @@
 
 %% Do not change this supplied function signature.
 start(N, WorkerNodes, Client) ->
-    %% TODO: Create N Workers. In concurrent mode WorkerNodes is empty and
-    %% every Worker is local. In distributed mode, Worker i must be spawned on
-    %% element i of WorkerNodes. Store Workers in ascending ID order.
     Workers = create_workers(N, WorkerNodes),
 
-    %% TODO: Wait for all Workers to report ready before notifying the Client.
     Client ! {coordinator_ready, self()},
     loop(0, Workers, #{}).
 
@@ -77,11 +73,31 @@ loop(AnalysisId, Workers, Pending) ->
             %% TODO: Permanently mark WorkerId inactive. If it is currently
             %% active, notify that Worker and wait for its acknowledgement.
             %% Repeated deactivation is valid.
+            W=lists:keyfind(WorkerId, #worker_info.id, Workers),
+             case W#worker_info.active of
+                true ->
+                    W#worker_info.pid ! {deactivate, self()},
+                    receive
+                        {worker_deactivated, _WorkerPid, WorkerId} -> ok
+                    end;
+                false ->
+                    ok
+            end,
+            NewWorkers = [case X#worker_info.id of
+                            WorkerId -> X#worker_info{active = false};
+                            _        -> X
+                        end || X <- Workers],
             Client ! {deactivated, self(), WorkerId},
-            loop(AnalysisId, Workers, Pending);
+            loop(AnalysisId, NewWorkers, Pending);
 
         {stop, Client} ->
-            %% TODO: Stop every Worker and wait for their acknowledgements.
+            lists:foreach(fun(W) -> W#worker_info.pid ! {stop, self()} end, Workers),
+            lists:foreach(
+                fun(#worker_info{id = Id, pid = Pid}) ->
+                    receive
+                        {worker_stopped, Pid, Id} -> ok
+                    end
+                end, Workers),
             Client ! {coordinator_stopped, self()},
             ok
     end.
