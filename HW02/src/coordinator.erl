@@ -62,33 +62,45 @@ loop(AnalysisId, Workers, Pending) ->
             end;
 
         {chunk_result, _WorkerPid, ResultAnalysisId, ChunkId, Count} ->
-            Entry = maps:get(ResultAnalysisId, Pending),
             %% TODO: Update the matching Pending analysis. Once every unique
             %% chunk result has arrived, send the total and analysis ID to its
             %% Client. Results from different analyses may be interleaved.
-            _ = {ResultAnalysisId, ChunkId, Count},
-            loop(AnalysisId, Workers, Pending);
+            Entry = maps:get(ResultAnalysisId, Pending),
+            #{client := Client, expected := Expected, results := Results} = Entry,
+            NewResults = Results#{ChunkId => Count},
+            NewEntry = Entry#{results => NewResults},
+            NewPending = Pending#{ResultAnalysisId => NewEntry},
+            if
+                map_size(NewResults) =:= Expected ->
+                    TotalCount = lists:sum(maps:values(NewResults)),
+                    Client ! {analysis_result, self(), ResultAnalysisId, TotalCount},
+                    loop(AnalysisId, Workers, maps:remove(ResultAnalysisId, NewPending));
+                true ->
+                    loop(AnalysisId, Workers, NewPending)
+            end;
+
 
         {deactivate, Client, WorkerId} ->
             %% TODO: Permanently mark WorkerId inactive. If it is currently
             %% active, notify that Worker and wait for its acknowledgement.
             %% Repeated deactivation is valid.
-            W=lists:keyfind(WorkerId, #worker_info.id, Workers),
-             case W#worker_info.active of
+            W = lists:keyfind(WorkerId, #worker_info.id, Workers),
+            case W#worker_info.active of
                 true ->
                     W#worker_info.pid ! {deactivate, self()},
                     receive
-                        {worker_deactivated, _WorkerPid, WorkerId} -> ok
+                        {worker_deactivated, _WorkerPid, WorkerId} ->
+                            NewWorkers = [if W#worker_info.id =:= WorkerId ->
+                                               W#worker_info{active = false};
+                                           true -> W
+                                       end || W <- Workers],
+                            Client ! {deactivated, self(), WorkerId},
+                            loop(AnalysisId, NewWorkers, Pending)
                     end;
                 false ->
-                    ok
-            end,
-            NewWorkers = [case X#worker_info.id of
-                            WorkerId -> X#worker_info{active = false};
-                            _        -> X
-                        end || X <- Workers],
-            Client ! {deactivated, self(), WorkerId},
-            loop(AnalysisId, NewWorkers, Pending);
+                    Client ! {deactivated, self(), WorkerId},
+                    loop(AnalysisId, Workers, Pending)
+            end;
 
         {stop, Client} ->
             lists:foreach(fun(W) -> W#worker_info.pid ! {stop, self()} end, Workers),

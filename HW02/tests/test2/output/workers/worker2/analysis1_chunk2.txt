@@ -1,0 +1,1 @@
+checks each container. When fog arrives, the boats reduce speed and wait for a clear radio message. A tide-warning notice is treated as one word, not as the separate word tide. After sunset

@@ -1,1 +1,1 @@
-Before sunrise the observatory team opened the silver dome and checked every instrument. The night-shift engineer compared orbit tables while a technician aligned the wide camera. Thin clouds moved east, but the southern sky remained clear enough for a long exposure. A status board listed orbit, weather, battery, and antenna tasks in separate columns. During
+A volcano observatory combines ground sensors, satellite images, gas measurements, and field reports. No single signal can predict every eruption. Scientists therefore compare changes in

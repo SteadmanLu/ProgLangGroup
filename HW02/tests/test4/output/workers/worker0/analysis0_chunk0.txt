@@ -1,0 +1,1 @@
+A rover begins each Martian day by checking power, temperature, and communication status. The rover then receives a plan created from recent images and scientific priorities. Before moving, it studies nearby rocks and estimates whether loose dust could hide a dangerous slope. During

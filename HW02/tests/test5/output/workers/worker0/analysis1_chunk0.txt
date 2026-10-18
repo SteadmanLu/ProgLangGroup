@@ -1,0 +1,1 @@
+An earthquake network records ground motion at stations spread across a wide region. Each station sends a time signal with its

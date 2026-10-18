@@ -1,0 +1,1 @@
+A small rover may cross level ground easily but require a longer route around a steep crater wall. The plan includes communication checks, rest periods, and alternate paths. Not every circular feature is a crater. Some may be volcanic, while others may be artifacts in an incomplete image. Reviewers compare several sources before adding a crater to the final map.

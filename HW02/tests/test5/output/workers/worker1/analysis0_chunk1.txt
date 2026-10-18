@@ -1,0 +1,1 @@
+earthquake activity, surface shape, heat, and gas before updating an alert. When lava reaches the surface, its speed depends on slope, temperature, and composition. A

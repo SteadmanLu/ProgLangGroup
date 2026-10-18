@@ -1,0 +1,4 @@
+analysis1 0
+analysis2 0
+analysis0 4
+analysis3 ERROR

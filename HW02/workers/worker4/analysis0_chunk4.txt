@@ -1,0 +1,1 @@
+notice uses ash-cloud for the combined hazard and ash for loose particles measured near the ground. Clear wording helps emergency teams choose appropriate actions.

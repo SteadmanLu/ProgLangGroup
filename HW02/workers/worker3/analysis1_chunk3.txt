@@ -1,0 +1,1 @@
+remove uncertainty. Buildings, soil, and distance all influence the shaking experienced at one location. Public reports separate measured facts from

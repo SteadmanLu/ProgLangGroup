@@ -1,6 +1,6 @@
 # PA2 Erlang Starter
 
-Group members: TODO
+Group members: Colin Labrie and Lucas Steadman
 
 Implemented features: TODO
 
