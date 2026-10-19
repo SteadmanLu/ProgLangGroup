@@ -61,56 +61,89 @@ loop(AnalysisId, Workers, Pending) ->
                     loop(AnalysisId + 1, Workers, Pending#{AnalysisId => Entry})
             end;
 
+        %% A Worker reports the partial count for one chunk of one analysis.
+        %% The IDs in the message let us credit the count to the right analysis,
+        %% even when results from several analyses arrive interleaved.
         {chunk_result, _WorkerPid, ResultAnalysisId, ChunkId, Count} ->
-            %% TODO: Update the matching Pending analysis. Once every unique
-            %% chunk result has arrived, send the total and analysis ID to its
-            %% Client. Results from different analyses may be interleaved.
+            %% Look up the bookkeeping note for the analysis this result belongs to.
             Entry = maps:get(ResultAnalysisId, Pending),
+            %% Pull out the Client to reply to, the number of chunks we sent out,
+            %% and the counts received so far (a map of ChunkId => Count).
             #{client := Client, expected := Expected, results := Results} = Entry,
+            %% Record this chunk's count. Keying by ChunkId means a repeated
+            %% result for the same chunk overwrites itself instead of being
+            %% counted twice, so only unique chunk results are tallied.
             NewResults = Results#{ChunkId => Count},
+            %% Variables can't be changed, so build an updated entry and an
+            %% updated Pending map that contains it.
             NewEntry = Entry#{results => NewResults},
             NewPending = Pending#{ResultAnalysisId => NewEntry},
             if
+                %% Every chunk has reported: this analysis is complete.
                 map_size(NewResults) =:= Expected ->
+                    %% Sum only this analysis's partial counts.
                     TotalCount = lists:sum(maps:values(NewResults)),
+                    %% Send the one final result for this analysis to the Client.
                     Client ! {analysis_result, self(), ResultAnalysisId, TotalCount},
+                    %% Drop the finished analysis from Pending, then keep looping.
+                    %% AnalysisId is unchanged because this starts no new analysis.
                     loop(AnalysisId, Workers, maps:remove(ResultAnalysisId, NewPending));
+                %% Still waiting on other chunks: save the updated counts and
+                %% go back to the loop so other messages can be handled.
                 true ->
                     loop(AnalysisId, Workers, NewPending)
             end;
 
-
+        %% The Client asks to permanently deactivate a Worker. The Client blocks
+        %% until it gets our reply, so this acts as a barrier: no later command
+        %% is processed until the Worker is marked inactive.
         {deactivate, Client, WorkerId} ->
-            %% TODO: Permanently mark WorkerId inactive. If it is currently
-            %% active, notify that Worker and wait for its acknowledgement.
-            %% Repeated deactivation is valid.
+            %% Find this Worker's record in the list.
             W = lists:keyfind(WorkerId, #worker_info.id, Workers),
             case W#worker_info.active of
+                %% Currently active: tell the Worker and wait for its
+                %% acknowledgement before releasing the Client.
                 true ->
                     W#worker_info.pid ! {deactivate, self()},
                     receive
                         {worker_deactivated, _WorkerPid, WorkerId} ->
+                            %% Build a new Workers list identical to the old one
+                            %% except that this Worker's active flag is false.
+                            %% Later analyses take their snapshot from this list,
+                            %% so they will skip this Worker.
                             NewWorkers = [if W#worker_info.id =:= WorkerId ->
                                                W#worker_info{active = false};
                                            true -> W
                                        end || W <- Workers],
+                            %% Acknowledge to the Client, releasing the barrier.
                             Client ! {deactivated, self(), WorkerId},
+                            %% Pending is untouched, so chunks already sent to this
+                            %% Worker still complete and count toward their analyses.
                             loop(AnalysisId, NewWorkers, Pending)
                     end;
+                %% Already inactive: repeated deactivation is valid and has no
+                %% further effect, so just acknowledge without messaging the Worker.
                 false ->
                     Client ! {deactivated, self(), WorkerId},
                     loop(AnalysisId, Workers, Pending)
             end;
 
+        %% The Client asks for shutdown, after all results have been collected.
         {stop, Client} ->
+            %% Tell every Worker to stop, active or not. Sending to all of them
+            %% first lets them shut down in parallel.
             lists:foreach(fun(W) -> W#worker_info.pid ! {stop, self()} end, Workers),
+            %% Then wait for one acknowledgement per Worker. Each receive matches
+            %% a specific Worker's pid and ID, so arrival order doesn't matter.
             lists:foreach(
                 fun(#worker_info{id = Id, pid = Pid}) ->
                     receive
                         {worker_stopped, Pid, Id} -> ok
                     end
                 end, Workers),
+            %% Every Worker has stopped, so it is now accurate to tell the Client.
             Client ! {coordinator_stopped, self()},
+            %% No loop call here: returning ends the Coordinator process.
             ok
     end.
 
