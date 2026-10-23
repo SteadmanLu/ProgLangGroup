@@ -2,9 +2,11 @@
 
 Group members: Colin Labrie and Lucas Steadman
 
-Implemented features: TODO
+Implemented features: 
+    The implementation of the coordinator, worker, and client modules. The coordinator is responsible for managing the workers and distributing tasks to them. The workers perform the assigned tasks and report back to the coordinator. The client module allows users to interact with the system and submit tasks for processing.
 
-Known bugs: TODO
+Known bugs: 
+    There are no known bugs at this time. The implementation has been tested with the provided test cases and has passed all of them successfully.
 
 Implement the assignment in these files:
 

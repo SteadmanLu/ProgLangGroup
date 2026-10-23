@@ -1,5 +1,0 @@
-pa2_t5_worker0@127.0.0.1
-pa2_t5_worker1@127.0.0.1
-pa2_t5_worker2@127.0.0.1
-pa2_t5_worker3@127.0.0.1
-pa2_t5_worker4@127.0.0.1

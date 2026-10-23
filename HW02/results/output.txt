@@ -1,5 +1,4 @@
-analysis0 2
-analysis1 4
-analysis2 2
+analysis0 5
+analysis1 1
+analysis2 3
 analysis3 2
-analysis4 1
