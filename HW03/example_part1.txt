@@ -1,0 +1,13 @@
+find songs by ed_sheeran
+find one song by ed_sheeran
+find songs of type rock
+find one song of type rock
+find songs shorter than 4 minutes
+find one song shorter than 4 minutes
+find songs of type pop shorter than 4 minutes
+find one song of type pop shorter than 4 minutes
+find songs by adele
+find songs of type jazz
+FIND SONGS BY ADELE
+find song by adele
+find songs by adele please

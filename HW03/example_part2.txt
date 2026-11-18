@@ -1,0 +1,6 @@
+test(total_duration([])).
+test(total_duration([shape_of_you,good_4_u])).
+test(total_duration([unknown_song])).
+test(make_playlist(15,16,3)).
+test(make_playlist(10,11,2)).
+test(make_playlist(11,12,2)).

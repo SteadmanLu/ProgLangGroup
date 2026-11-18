@@ -1,0 +1,10 @@
+total_duration([]) => 0
+total_duration([shape_of_you,good_4_u]) => 7
+total_duration([unknown_song]) => false
+make_playlist(15,16,3) =>
+  [[happier_than_ever,rocket_man,skyfall]]
+make_playlist(10,11,2) =>
+  [[happier_than_ever,rocket_man],
+   [happier_than_ever,skyfall],
+   [rocket_man,skyfall]]
+make_playlist(11,12,2) => []
