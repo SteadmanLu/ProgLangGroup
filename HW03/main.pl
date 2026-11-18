@@ -4,39 +4,57 @@
 % ============================================================
 % Part 1
 % ============================================================
-% replace "fail" for your solution. It is simply a placeholder to avoid binding for the starter code.
+
+% Returns an empty list if the input list is empty.
 first_or_empty([], []).
 first_or_empty([First|_], [First]).
+
+% Takes the parsed tokens and finds matching songs.
 song_query(Tokens, Songs) :-
     request(Songs, Tokens).
 
-request(Songs,[find, songs, by, Artist]) :-
+% Finds all songs by a specific artist.
+request(Songs, [find, songs, by, Artist]) :-
     findall(Name, song(Name, _, Artist, _), Unsorted),
     sort(Unsorted, Songs).
+
+% Finds all songs of a specific type.
 request(Songs, [find, songs, of, type, Type]) :-
     findall(Name, song(Name, Type, _, _), Unsorted),
     sort(Unsorted, Songs).
+
+% Finds all songs shorter than a specified number of minutes.
 request(Songs, [find, songs, shorter, than, N, minutes]) :-
     atom_number(N, NAtom),
     findall(Name, (song(Name, _, _, Duration), Duration < NAtom), Unsorted),
     sort(Unsorted, Songs).
+
+% Finds all songs of a specific type shorter than a specified number of minutes.
 request(Songs, [find, songs, of, type, Type, shorter, than, N, minutes]) :-
     atom_number(N, NAtom),
     findall(Name, (song(Name, Type, _, Duration), Duration < NAtom), Unsorted),
     sort(Unsorted, Songs).
+
+% Finds one song by a specific artist.
 request(Songs, [find, one, song, by, Artist]) :-
     findall(Name, song(Name, _, Artist, _), Unsorted),
     sort(Unsorted, Temp),
     first_or_empty(Temp, Songs).
+
+% Finds one song of a specific type.
 request(Songs, [find, one, song, of, type, Type]) :-
     findall(Name, song(Name, Type, _, _), Unsorted),
     sort(Unsorted, Temp),
     first_or_empty(Temp, Songs).
+
+% Finds one song shorter than a specified number of minutes.
 request(Songs, [find, one, song, shorter, than, N, minutes]) :-
     atom_number(N, NAtom),
     findall(Name, (song(Name, _, _, Duration), Duration < NAtom), Unsorted),
     sort(Unsorted, Temp),
     first_or_empty(Temp, Songs).
+
+% Finds one song of a specific type shorter than a specified number of minutes.
 request(Songs, [find, one, song, of, type, Type, shorter, than, N, minutes]) :-
     atom_number(N, NAtom),
     findall(Name, (song(Name, Type, _, Duration), Duration < NAtom), Unsorted),
